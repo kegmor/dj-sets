@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { Vpc, SecurityGroup, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { ISecret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
-import { LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
+import { LambdaRestApi, ApiKeySourceType } from 'aws-cdk-lib/aws-apigateway';
 
 interface ApiStackProps extends StackProps {
   vpc: Vpc;
@@ -28,8 +28,20 @@ export class ApiStack extends Stack {
     });
     const api = new LambdaRestApi(this, 'DjSetsApi', {
         handler: lambdaFunction,
+        apiKeySourceType: ApiKeySourceType.HEADER,
+        defaultMethodOptions: {
+          apiKeyRequired: true,
+        },
     });
+    const apiKey = api.addApiKey('DjSetsApiKey');
+    const plan = api.addUsagePlan('UsagePlan', {
+        throttle: {
+            rateLimit: 10,
+            burstLimit: 5,
+        },
+    });
+    plan.addApiKey(apiKey);
+    plan.addApiStage({ stage: api.deploymentStage });
     props.dbSecret.grantRead(lambdaFunction);
-
   }
 }

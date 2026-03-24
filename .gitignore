@@ -1,5 +1,6 @@
 # Backend
 backend/bin/
+backend/cmd/api/bootstrap
 
 # Frontend
 frontend/node_modules/
@@ -20,4 +21,3 @@ infra/cdk.context.json
 # Environment
 .env
 .env.local
-backend/cmd/api/bootstrap

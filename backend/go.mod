@@ -19,6 +19,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.9 // indirect
 	github.com/aws/smithy-go v1.24.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/lib/pq v1.12.0 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/pressly/goose/v3 v3.27.0 // indirect

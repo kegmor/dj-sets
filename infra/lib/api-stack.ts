@@ -4,6 +4,7 @@ import { Vpc, SecurityGroup, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { ISecret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
 import { LambdaRestApi, ApiKeySourceType } from 'aws-cdk-lib/aws-apigateway';
+import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 
 interface ApiStackProps extends StackProps {
   vpc: Vpc;
@@ -42,6 +43,12 @@ export class ApiStack extends Stack {
     });
     plan.addApiKey(apiKey);
     plan.addApiStage({ stage: api.deploymentStage });
-    props.dbSecret.grantRead(lambdaFunction);
+    lambdaFunction.addToRolePolicy(new PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [
+            props.dbSecret.secretArn,
+            `arn:aws:secretsmanager:${this.region}:${this.account}:secret:youtube-api-key-*`,
+        ],
+    }));
   }
 }

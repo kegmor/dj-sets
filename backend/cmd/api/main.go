@@ -25,11 +25,17 @@ type Secrets struct {
 	DBName 		string `json:"dbname"`
 }
 
+type YouTube struct {
+	YoutubeAPIKey	string `json:"youtube-api-key"`
+}
+
 var db *sql.DB
+var youtubeKey string
 
 func init() {
 	secretName := "rds-credentials"
 	region := os.Getenv("AWS_REGION")
+	youtubeAPIKey := "youtube-api-key"
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
@@ -44,10 +50,28 @@ func init() {
 		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
 	}
 
+	ytKey := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(youtubeAPIKey),
+		VersionStage: aws.String("AWSCURRENT"),
+	}
+
 	result, err := svc.GetSecretValue(context.TODO(), input)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	yt, err := svc.GetSecretValue(context.TODO(), ytKey)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	var ytKeyString string = *yt.SecretString
+	var ytak YouTube
+	err = json.Unmarshal([]byte(ytKeyString), &ytak)
+	if err != nil {
+		log.Fatal(err)
+	}
+	youtubeKey = ytak.YoutubeAPIKey
 
 	var secretString string = *result.SecretString
 

@@ -26,7 +26,7 @@ type Secrets struct {
 }
 
 type YouTube struct {
-	YoutubeAPIKey	string `json:"youtube-api-key"`
+	YoutubeAPIKey	string `json:"api_key"`
 }
 
 var db *sql.DB

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	lambdaService "github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/google/uuid"
 	"github.com/kegmor/dj-sets/backend/internal/database"
 	"github.com/kegmor/dj-sets/backend/internal/repository"
 	"github.com/kegmor/dj-sets/backend/internal/service"
@@ -101,7 +103,6 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		//handle get
 	case "POST":
 		if request.Path == "/sets" {
-
 			data, err := extractDjAndUrl(request.Body)
 			if err != nil {
 				return events.APIGatewayProxyResponse{
@@ -139,7 +140,59 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			}, nil
 		}
 	case "DELETE":
-		// handle delete
+		if request.Path == "/sets/{id}" {
+			id := request.PathParameters["id"]
+			if id != "" {
+				num, err := uuid.Parse(id)
+				if err != nil {
+					return events.APIGatewayProxyResponse{
+						StatusCode: 500,
+						Body:		fmt.Sprintf("failed to parse uuid %v", err),
+					}, nil
+				}
+				result, err := set.DeleteDjSetById(num)
+				body, err := json.Marshal(result)
+				if err != nil {
+					return events.APIGatewayProxyResponse{
+						StatusCode: 500,
+						Body:		fmt.Sprintf("failed to marshal response %v", err),
+					}, nil
+				}
+				return events.APIGatewayProxyResponse{
+					StatusCode: 201,
+					Body: 		string(body),
+					Headers: 	map[string]string{"Content-Type": "application/json"},
+				}, nil
+			} else {
+				parts := strings.Split(request.Path, "/")
+				if len(parts) == 0 {
+					return events.APIGatewayProxyResponse{
+						StatusCode: 500,
+						Body:		fmt.Sprintf("failed to retrieve set id %v", err),
+					}, nil
+				}
+				id, err := uuid.Parse(parts[len(parts) - 1])
+				if err != nil {
+					return events.APIGatewayProxyResponse{
+						StatusCode: 500,
+						Body:		fmt.Sprintf("failed to uuid.Parse uuid %v", err),
+					}, nil
+				}
+				result, err := set.DeleteDjSetById(id)
+				body, err := json.Marshal(result)
+				if err != nil {
+					return events.APIGatewayProxyResponse{
+						StatusCode: 500,
+						Body:		fmt.Sprintf("failed to marshal response %v", err),
+					}, nil
+				}
+				return events.APIGatewayProxyResponse{
+					StatusCode: 201,
+					Body: 		string(body),
+					Headers: 	map[string]string{"Content-Type": "application/json"},
+				}, nil
+			}			
+		}
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
 	}

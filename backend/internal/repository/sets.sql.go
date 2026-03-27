@@ -7,7 +7,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -23,7 +22,7 @@ type CreateSetParams struct {
 	VideoID     string
 	Title       string
 	DjName      string
-	ChannelName sql.NullString
+	ChannelName string
 	Url         string
 }
 

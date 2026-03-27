@@ -4,7 +4,7 @@ CREATE TABLE sets(
     video_id TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
     dj_name TEXT NOT NULL,
-    channel_name TEXT,
+    channel_name TEXT NOT NULL,
     url TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT Now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT Now()

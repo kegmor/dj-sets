@@ -53,6 +53,10 @@ export class DatabaseStack extends Stack {
     vpc.addInterfaceEndpoint('SecretsManagerEndpoint', {
       service: InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
     });
+
+    vpc.addInterfaceEndpoint('LambdaEndpoint', {
+      service: InterfaceVpcEndpointAwsService.LAMBDA,
+    });
     
     const dbSecurityGroup = new SecurityGroup(this, 'DbSecurityGroup', {
       vpc,

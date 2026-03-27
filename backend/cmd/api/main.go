@@ -6,18 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	lambdaService "github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/kegmor/dj-sets/backend/internal/database"
 	"github.com/kegmor/dj-sets/backend/internal/repository"
 	"github.com/kegmor/dj-sets/backend/internal/service"
-	"github.com/kegmor/dj-sets/backend/internal/youtube"
 	_ "github.com/lib/pq"
 )
 
@@ -29,23 +28,18 @@ type Secrets struct {
 	DBName 		string `json:"dbname"`
 }
 
-type YouTube struct {
-	YoutubeAPIKey	string `json:"api_key"`
-}
-
 type CreateSetRequest struct {
 	URL		string `json:"url"`
 	DjName	string `json:"dj_name"`
 }
 
 var db *sql.DB
-var youtubeKey string
 var set *service.SetService
 
 func init() {
 	secretName := "rds-credentials"
 	region := os.Getenv("AWS_REGION")
-	youtubeAPIKey := "youtube-api-key"
+	ytLambda := os.Getenv("YOUTUBE_LAMBDA")
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
@@ -54,15 +48,10 @@ func init() {
 
 	// Create Secrets Manager Client
 	svc := secretsmanager.NewFromConfig(cfg)
-
+	
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretName),
 		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
-	}
-
-	ytKey := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(youtubeAPIKey),
-		VersionStage: aws.String("AWSCURRENT"),
 	}
 
 	result, err := svc.GetSecretValue(context.TODO(), input)
@@ -70,23 +59,8 @@ func init() {
 		log.Fatal(err.Error())
 	}
 
-	yt, err := svc.GetSecretValue(context.TODO(), ytKey)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	var ytKeyString string = *yt.SecretString
-	var ytak YouTube
-	err = json.Unmarshal([]byte(ytKeyString), &ytak)
-	if err != nil {
-		log.Fatal(err)
-	}
-	youtubeKey = ytak.YoutubeAPIKey
-
-	var secretString string = *result.SecretString
-
 	var secret Secrets
-	err = json.Unmarshal([]byte(secretString), &secret)
+	err = json.Unmarshal([]byte(*result.SecretString), &secret)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +81,9 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	set = service.NewSetService(repository.New(db), youtube.NewYouTube(youtubeAPIKey, &http.Client{}))
+
+	lambdaClient := lambdaService.NewFromConfig(cfg)
+	set = service.NewSetService(repository.New(db), lambdaClient, ytLambda)
 }
 
 func extractDjAndUrl(body string) (*CreateSetRequest, error) {
@@ -125,7 +101,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		//handle get
 	case "POST":
 		if request.Path == "/sets" {
-			
+
 			data, err := extractDjAndUrl(request.Body)
 			if err != nil {
 				return events.APIGatewayProxyResponse{
@@ -152,7 +128,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			if err != nil {
 				return events.APIGatewayProxyResponse{
 					StatusCode: 500,
-					Body:		fmt.Sprintf("failed to marshal response %v", err)
+					Body:		fmt.Sprintf("failed to marshal response %v", err),
 				}, nil
 			}
 

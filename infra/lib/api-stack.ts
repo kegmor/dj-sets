@@ -16,7 +16,23 @@ export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    const lambdaFunction = new Function(this, 'ApiHandler', {
+     // YouTube Lambda - outside VPC for internet access
+    const youtubeFunction = new Function(this, 'YouTubeHandler', {
+      runtime: Runtime.PROVIDED_AL2023,
+      handler: 'bootstrap',
+      code: Code.fromAsset('../backend/cmd/youtube'),
+      timeout: Duration.seconds(15),
+    });
+
+     // Grant YouTube Lambda access to the YouTube API key secret
+    youtubeFunction.addToRolePolicy(new PolicyStatement({
+      actions: ['secretsmanager:GetSecretValue'],
+      resources: [
+        `arn:aws:secretsmanager:${this.region}:${this.account}:secret:youtube-api-key-*`,
+      ],
+    }));
+
+    const apiFunction = new Function(this, 'ApiHandler', {
         runtime: Runtime.PROVIDED_AL2023,
         handler: 'bootstrap',
         code: Code.fromAsset('../backend/cmd/api'),
@@ -26,14 +42,29 @@ export class ApiStack extends Stack {
         },
         securityGroups: [props.dbSecurityGroup],
         timeout: Duration.seconds(30),
+        environment: {
+            YOUTUBE_LAMBDA: youtubeFunction.functionName,
+        },
     });
+
+    // Grant API Lambda access to invoke YouTube Lambda
+    youtubeFunction.grantInvoke(apiFunction);
+
+    apiFunction.addToRolePolicy(new PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [
+            props.dbSecret.secretArn,
+        ],
+    }));
+
     const api = new LambdaRestApi(this, 'DjSetsApi', {
-        handler: lambdaFunction,
+        handler: apiFunction,
         apiKeySourceType: ApiKeySourceType.HEADER,
         defaultMethodOptions: {
           apiKeyRequired: true,
         },
     });
+
     const apiKey = api.addApiKey('DjSetsApiKey');
     const plan = api.addUsagePlan('UsagePlan', {
         throttle: {
@@ -41,14 +72,8 @@ export class ApiStack extends Stack {
             burstLimit: 5,
         },
     });
+    
     plan.addApiKey(apiKey);
     plan.addApiStage({ stage: api.deploymentStage });
-    lambdaFunction.addToRolePolicy(new PolicyStatement({
-        actions: ['secretsmanager:GetSecretValue'],
-        resources: [
-            props.dbSecret.secretArn,
-            `arn:aws:secretsmanager:${this.region}:${this.account}:secret:youtube-api-key-*`,
-        ],
-    }));
   }
 }

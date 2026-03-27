@@ -21,7 +21,7 @@ type Set struct {
 	VideoID     string
 	Title       string
 	DjName      string
-	ChannelName sql.NullString
+	ChannelName string
 	Url         string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

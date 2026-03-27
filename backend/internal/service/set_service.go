@@ -42,7 +42,7 @@ func extractVideoId(webAddress string) (string, error) {
 	return videoId, nil
 }
 
-func (s *SetService) CreateDjSet (webAddress string, djName string) (*repository.Set, error) {
+func (s *SetService) CreateDjSet(webAddress string, djName string) (*repository.Set, error) {
 	
 	videoId, err := extractVideoId(webAddress)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *SetService) CreateDjSet (webAddress string, djName string) (*repository
 	return &createdSet, nil
 }
 
-func (s *SetService) GetAllDjSets () ([]repository.Set, error) {
+func (s *SetService) GetAllDjSets() ([]repository.Set, error) {
 	djSets, err := s.db.GetAllSets(context.Background())
 	if err != nil {
 		return []repository.Set{}, fmt.Errorf("failed to get all dj sets %w", err)
@@ -77,7 +77,7 @@ func (s *SetService) GetAllDjSets () ([]repository.Set, error) {
 	return djSets, nil
 }
 
-func (s *SetService) GetDjSetById (id uuid.UUID) (repository.Set, error) {
+func (s *SetService) GetDjSetById(id uuid.UUID) (repository.Set, error) {
 	djSet, err := s.db.GetSetById(context.Background(), id)
 	if err != nil {
 		return repository.Set{}, fmt.Errorf("failed to get dj set by id %w", err)

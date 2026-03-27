@@ -6,14 +6,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"	
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/kegmor/dj-sets/backend/internal/database"
+	"github.com/kegmor/dj-sets/backend/internal/repository"
+	"github.com/kegmor/dj-sets/backend/internal/service"
+	"github.com/kegmor/dj-sets/backend/internal/youtube"
 	_ "github.com/lib/pq"
 )
 
@@ -29,8 +33,14 @@ type YouTube struct {
 	YoutubeAPIKey	string `json:"api_key"`
 }
 
+type CreateSetRequest struct {
+	URL		string `json:"url"`
+	DjName	string `json:"dj_name"`
+}
+
 var db *sql.DB
 var youtubeKey string
+var set *service.SetService
 
 func init() {
 	secretName := "rds-credentials"
@@ -97,13 +107,67 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	set = service.NewSetService(repository.New(db), youtube.NewYouTube(youtubeAPIKey, &http.Client{}))
+}
+
+func extractDjAndUrl(body string) (*CreateSetRequest, error) {
+	var req CreateSetRequest
+	err := json.Unmarshal([]byte(body), &req)
+	if err != nil {
+		return nil, fmt.Errorf("invalid request body %w", err)
+	}
+	return &req, nil
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	return events.APIGatewayProxyResponse{
-		StatusCode: 200,
-		Body: "hello world",	
-	}, nil
+	switch request.HTTPMethod{
+	case "GET":
+		//handle get
+	case "POST":
+		if request.Path == "/sets" {
+			
+			data, err := extractDjAndUrl(request.Body)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:		fmt.Sprintf("failed to extract url and djName %v", err),
+				}, nil
+			}
+			if data.DjName == "" || data.URL == "" {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:		fmt.Sprintf("url and dj name are required %v", err),
+				}, nil
+			}
+
+			result, err := set.CreateDjSet(data.URL, data.DjName)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+					Body:		fmt.Sprintf("failed to create dj set %v", err),
+				}, nil
+			}
+
+			body, err := json.Marshal(result)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+					Body:		fmt.Sprintf("failed to marshal response %v", err)
+				}, nil
+			}
+
+			return events.APIGatewayProxyResponse{
+				StatusCode: 201,
+				Body: 		string(body),
+				Headers: 	map[string]string{"Content-Type": "application/json"},
+			}, nil
+		}
+	case "DELETE":
+		// handle delete
+	default:
+		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
+	}
+	return events.APIGatewayProxyResponse{StatusCode: 404}, nil
 }
 
 func main() {

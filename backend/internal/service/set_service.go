@@ -42,19 +42,19 @@ func extractVideoId(webAddress string) (string, error) {
 	return videoId, nil
 }
 
-func (api *SetService) CreateSet (webAddress string, djName string) (*repository.Set, error) {
+func (s *SetService) CreateDjSet (webAddress string, djName string) (*repository.Set, error) {
 	
 	videoId, err := extractVideoId(webAddress)
 	if err != nil {
 		return &repository.Set{}, fmt.Errorf("failed to get video id %w", err)
 	}
 	
-	gvd, err := api.yt.GetVideoDetails(videoId)
+	gvd, err := s.yt.GetVideoDetails(videoId)
 	if err != nil {
 		return &repository.Set{}, fmt.Errorf("Unable to retrieve video data from youtube %w", err)
 	}
 	
-	createdSet, err := api.db.CreateSet(context.Background(), repository.CreateSetParams{
+	createdSet, err := s.db.CreateSet(context.Background(), repository.CreateSetParams{
 		ID: uuid.New(),
 		VideoID: videoId,
 		Title: gvd.Title,
@@ -67,4 +67,28 @@ func (api *SetService) CreateSet (webAddress string, djName string) (*repository
 	}
 	
 	return &createdSet, nil
+}
+
+func (s *SetService) GetAllDjSets () ([]repository.Set, error) {
+	djSets, err := s.db.GetAllSets(context.Background())
+	if err != nil {
+		return []repository.Set{}, fmt.Errorf("failed to get all dj sets %w", err)
+	}
+	return djSets, nil
+}
+
+func (s *SetService) GetDjSetById (id uuid.UUID) (repository.Set, error) {
+	djSet, err := s.db.GetSetById(context.Background(), id)
+	if err != nil {
+		return repository.Set{}, fmt.Errorf("failed to get dj set by id %w", err)
+	}
+	return djSet, nil
+}
+
+func (s *SetService) DeleteDjSetById (id uuid.UUID) (repository.Set, error) {
+	djSet, err := s.db.DeleteSetById(context.Background(), id)
+	if err != nil {
+		return repository.Set{}, fmt.Errorf("failed to delete dj set by id %w", err)
+	}
+	return djSet, nil
 }

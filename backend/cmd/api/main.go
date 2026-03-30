@@ -100,7 +100,50 @@ func extractDjAndUrl(body string) (*CreateSetRequest, error) {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch request.HTTPMethod{
 	case "GET":
-		//handle get
+		result := []repository.Set{}
+		if request.Path == "/sets" {
+			data, err := set.GetAllDjSets()
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:		fmt.Sprintf("failed to get dj sets %v", err),
+				}, nil
+			}
+			result = data
+		} else if strings.HasPrefix(request.Path, "/sets") { 
+			id := request.PathParameters["id"]
+			if id == "" {
+				parts := strings.Split(request.Path, "/")
+				id = parts[len(parts) - 1]
+			}
+			parsedID, err := uuid.Parse(id)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:		fmt.Sprintf("invalid set id %v", err),
+				}, nil 
+			}
+			data, err := set.GetDjSetById(parsedID)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:		fmt.Sprintf("unable to get set by id %v", err),
+				}, nil
+			}
+			result = data			
+		}
+		body, err := json.Marshal(result)
+		if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+					Body:		fmt.Sprintf("failed to marshal response %v", err),
+				}, nil
+		}
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Body: 		string(body),
+			Headers: 	map[string]string{"Content-Type": "application/json"},
+		}, nil				
 	case "POST":
 		if request.Path == "/sets" {
 			data, err := extractDjAndUrl(request.Body)
@@ -140,59 +183,40 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			}, nil
 		}
 	case "DELETE":
-		if request.Path == "/sets/{id}" {
-			id := request.PathParameters["id"]
-			if id != "" {
-				num, err := uuid.Parse(id)
-				if err != nil {
-					return events.APIGatewayProxyResponse{
-						StatusCode: 500,
-						Body:		fmt.Sprintf("failed to parse uuid %v", err),
-					}, nil
-				}
-				result, err := set.DeleteDjSetById(num)
-				body, err := json.Marshal(result)
-				if err != nil {
-					return events.APIGatewayProxyResponse{
-						StatusCode: 500,
-						Body:		fmt.Sprintf("failed to marshal response %v", err),
-					}, nil
-				}
-				return events.APIGatewayProxyResponse{
-					StatusCode: 201,
-					Body: 		string(body),
-					Headers: 	map[string]string{"Content-Type": "application/json"},
-				}, nil
-			} else {
-				parts := strings.Split(request.Path, "/")
-				if len(parts) == 0 {
-					return events.APIGatewayProxyResponse{
-						StatusCode: 500,
-						Body:		fmt.Sprintf("failed to retrieve set id %v", err),
-					}, nil
-				}
-				id, err := uuid.Parse(parts[len(parts) - 1])
-				if err != nil {
-					return events.APIGatewayProxyResponse{
-						StatusCode: 500,
-						Body:		fmt.Sprintf("failed to uuid.Parse uuid %v", err),
-					}, nil
-				}
-				result, err := set.DeleteDjSetById(id)
-				body, err := json.Marshal(result)
-				if err != nil {
-					return events.APIGatewayProxyResponse{
-						StatusCode: 500,
-						Body:		fmt.Sprintf("failed to marshal response %v", err),
-					}, nil
-				}
-				return events.APIGatewayProxyResponse{
-					StatusCode: 201,
-					Body: 		string(body),
-					Headers: 	map[string]string{"Content-Type": "application/json"},
-				}, nil
-			}			
+		if !strings.HasPrefix(request.Path, "/sets") {
+			return events.APIGatewayProxyResponse{StatusCode: 404}, nil
 		}
+		id := request.PathParameters["id"]
+		if id == "" {
+			parts := strings.Split(request.Path, "/")
+			id = parts[len(parts) - 1]
+		}			
+		parsedID, err := uuid.Parse(id)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 400,
+				Body:		fmt.Sprintf("invalid set id %v", err),
+			}, nil 
+		}
+		result, err := set.DeleteDjSetById(parsedID)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 400,
+				Body:		fmt.Sprintf("unable to delete set by id %v", err),
+			}, nil
+		}
+		body, err := json.Marshal(result)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Body:		fmt.Sprintf("failed to marshal response %v", err),
+			}, nil
+		}
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Body: 		string(body),
+			Headers: 	map[string]string{"Content-Type": "application/json"},
+		}, nil			
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
 	}

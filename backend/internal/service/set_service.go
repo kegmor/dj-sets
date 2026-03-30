@@ -117,12 +117,12 @@ func (s *SetService) GetAllDjSets() ([]repository.Set, error) {
 	return djSets, nil
 }
 
-func (s *SetService) GetDjSetById(id uuid.UUID) (repository.Set, error) {
+func (s *SetService) GetDjSetById(id uuid.UUID) ([]repository.Set, error) {
 	djSet, err := s.db.GetSetById(context.Background(), id)
 	if err != nil {
-		return repository.Set{}, fmt.Errorf("failed to get dj set by id %w", err)
+		return []repository.Set{}, fmt.Errorf("failed to get dj set by id %w", err)
 	}
-	return djSet, nil
+	return []repository.Set{djSet}, nil
 }
 
 func (s *SetService) DeleteDjSetById (id uuid.UUID) (repository.Set, error) {

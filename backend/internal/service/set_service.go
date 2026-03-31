@@ -55,13 +55,13 @@ func extractVideoId(webAddress string) (string, error) {
 	return videoId, nil
 }
 
-func (s *SetService) fetchYouTubeDetails(videoID string) (*YouTubeLambdaResponse, error) {
+func (s *SetService) fetchYouTubeDetails(ctx context.Context, videoID string) (*YouTubeLambdaResponse, error) {
 	payload, err := json.Marshal(YouTubeLambdaRequest{VideoID: videoID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal youtube request: %w", err)
 	}
  
-	result, err := s.lambdaClient.Invoke(context.Background(), &lambdaService.InvokeInput{
+	result, err := s.lambdaClient.Invoke(ctx, &lambdaService.InvokeInput{
 		FunctionName: aws.String(s.ytLambda),
 		Payload:      payload,
 	})
@@ -82,19 +82,19 @@ func (s *SetService) fetchYouTubeDetails(videoID string) (*YouTubeLambdaResponse
 	return &response, nil
 }
 
-func (s *SetService) CreateDjSet(webAddress string, djName string) (*repository.Set, error) {
+func (s *SetService) CreateDjSet(ctx context.Context, webAddress string, djName string) (*repository.Set, error) {
 	
 	videoId, err := extractVideoId(webAddress)
 	if err != nil {
-		return &repository.Set{}, fmt.Errorf("failed to get video id %w", err)
+		return nil, fmt.Errorf("failed to get video id %w", err)
 	}
 	
-	gvd, err := s.fetchYouTubeDetails(videoId)
+	gvd, err := s.fetchYouTubeDetails(ctx, videoId)
 	if err != nil {
-		return &repository.Set{}, fmt.Errorf("Unable to retrieve video data from youtube %w", err)
+		return nil, fmt.Errorf("Unable to retrieve video data from youtube %w", err)
 	}
 	
-	createdSet, err := s.db.CreateSet(context.Background(), repository.CreateSetParams{
+	createdSet, err := s.db.CreateSet(ctx, repository.CreateSetParams{
 		ID: 		 uuid.New(),
 		VideoID: 	 videoId,
 		Title: 		 gvd.Title,
@@ -103,32 +103,32 @@ func (s *SetService) CreateDjSet(webAddress string, djName string) (*repository.
 		Url: 		 webAddress,
 	})
 	if err != nil {
-		return &repository.Set{}, fmt.Errorf("failed to create dj set %w", err)
+		return nil, fmt.Errorf("failed to create dj set %w", err)
 	}
 	
 	return &createdSet, nil
 }
 
-func (s *SetService) GetAllDjSets() ([]repository.Set, error) {
-	djSets, err := s.db.GetAllSets(context.Background())
+func (s *SetService) GetAllDjSets(ctx context.Context) ([]repository.Set, error) {
+	djSets, err := s.db.GetAllSets(ctx)
 	if err != nil {
-		return []repository.Set{}, fmt.Errorf("failed to get all dj sets %w", err)
+		return nil, fmt.Errorf("failed to get all dj sets %w", err)
 	}
 	return djSets, nil
 }
 
-func (s *SetService) GetDjSetById(id uuid.UUID) ([]repository.Set, error) {
-	djSet, err := s.db.GetSetById(context.Background(), id)
+func (s *SetService) GetDjSetById(ctx context.Context, id uuid.UUID) ([]repository.Set, error) {
+	djSet, err := s.db.GetSetById(ctx, id)
 	if err != nil {
-		return []repository.Set{}, fmt.Errorf("failed to get dj set by id %w", err)
+		return nil, fmt.Errorf("failed to get dj set by id %w", err)
 	}
 	return []repository.Set{djSet}, nil
 }
 
-func (s *SetService) DeleteDjSetById (id uuid.UUID) (repository.Set, error) {
-	djSet, err := s.db.DeleteSetById(context.Background(), id)
+func (s *SetService) DeleteDjSetById (ctx context.Context ,id uuid.UUID) (*repository.Set, error) {
+	djSet, err := s.db.DeleteSetById(ctx, id)
 	if err != nil {
-		return repository.Set{}, fmt.Errorf("failed to delete dj set by id %w", err)
+		return nil, fmt.Errorf("failed to delete dj set by id %w", err)
 	}
-	return djSet, nil
+	return &djSet, nil
 }

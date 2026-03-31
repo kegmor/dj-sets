@@ -1,6 +1,7 @@
 # Backend
 backend/bin/
 backend/cmd/api/bootstrap
+backend/cmd/youtube/bootstrap
 
 # Frontend
 frontend/node_modules/

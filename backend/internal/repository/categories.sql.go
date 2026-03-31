@@ -67,3 +67,14 @@ func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
 	}
 	return items, nil
 }
+
+const getCategoryByName = `-- name: GetCategoryByName :one
+SELECT id, name FROM categories WHERE name=$1
+`
+
+func (q *Queries) GetCategoryByName(ctx context.Context, name string) (Category, error) {
+	row := q.db.QueryRowContext(ctx, getCategoryByName, name)
+	var i Category
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}

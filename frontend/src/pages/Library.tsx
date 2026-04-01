@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import { getSets } from "../api";
 import { type DjSet } from "../types"
 
@@ -11,12 +12,13 @@ function Library() {
 
     return (
         <div className="Library">
+            <Link to="/add">Add New Set</Link>
             {djSets.map((set: DjSet) => (
-                <div key={set.ID}>
+                <Link to={`sets/${set.ID}`} key={set.ID}>
                     <h2>{set.DjName}</h2>
                     <p>{set.Title}</p>
                     <p>{set.ChannelName}</p>
-                </div>
+                </Link>
             ))}
         </div>
     );

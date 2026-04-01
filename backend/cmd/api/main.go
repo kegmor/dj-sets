@@ -29,6 +29,12 @@ type Secrets struct {
 	DBName 		string `json:"dbname"`
 }
 
+var corsHeaders = map[string]string{
+	"Access-Control-Allow-Origin":  "*",
+	"Access-Control-Allow-Headers": "Content-Type,x-api-key",
+	"Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
+}
+
 var db *sql.DB
 var set *service.SetService
 var category *service.CatService
@@ -84,13 +90,37 @@ func init() {
 	category = service.NewCatService(repository.New(db))
 }
 
+func respond(statusCode int, body string) events.APIGatewayProxyResponse {
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       body,
+		Headers:    corsHeaders,
+	}
+}
+ 
+func respondJSON(statusCode int, data interface{}) (events.APIGatewayProxyResponse, error) {
+	body, err := json.Marshal(data)
+	if err != nil {
+		return respond(500, fmt.Sprintf("failed to marshal response: %v", err)), nil
+	}
+	return respond(statusCode, string(body)), nil
+}
+ 
+func respondError(statusCode int, message string, err error) (events.APIGatewayProxyResponse, error) {
+	return respond(statusCode, fmt.Sprintf("%s: %v", message, err)), nil
+}
+
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-    if strings.HasPrefix(request.Path, "/sets") {
+    if request.HTTPMethod == "OPTIONS" {
+		return respond(200, ""), nil
+	}
+	
+	if strings.HasPrefix(request.Path, "/sets") {
         return handleSets(ctx, request)
     } else if strings.HasPrefix(request.Path, "/categories") {
         return handleCategories(ctx, request)
     }
-    return events.APIGatewayProxyResponse{StatusCode: 404}, nil
+    return respond(404, "not found"), nil
 }
 
 func main() {

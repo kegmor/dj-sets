@@ -32,10 +32,7 @@ func handleSets(ctx context.Context, request events.APIGatewayProxyRequest) (eve
 		if request.Path == "/sets" {
 			data, err := set.GetAllDjSets(ctx)
 			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:		fmt.Sprintf("failed to get dj sets %v", err),
-				}, nil
+				return respondError(400, "failed to get dj sets", err)
 			}
 			result = data
 		} else if strings.HasPrefix(request.Path, "/sets") { 
@@ -46,73 +43,33 @@ func handleSets(ctx context.Context, request events.APIGatewayProxyRequest) (eve
 			}
 			parsedID, err := uuid.Parse(id)
 			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:		fmt.Sprintf("invalid set id %v", err),
-				}, nil 
+				return respondError(400, "invalid set id", err)
 			}
 			data, err := set.GetDjSetById(ctx, parsedID)
 			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:		fmt.Sprintf("unable to get set by id %v", err),
-				}, nil
+				return respondError(400, "unable to get set by id", err)
 			}
 			result = data			
 		}
-		body, err := json.Marshal(result)
-		if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 500,
-					Body:		fmt.Sprintf("failed to marshal response %v", err),
-				}, nil
-		}
-		return events.APIGatewayProxyResponse{
-			StatusCode: 200,
-			Body: 		string(body),
-			Headers: 	map[string]string{"Content-Type": "application/json"},
-		}, nil				
+		return respondJSON(200, result)			
 	case "POST":
-		if request.Path == "/sets" {
-			data, err := extractDjAndUrl(request.Body)
-			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:		fmt.Sprintf("failed to extract url and djName %v", err),
-				}, nil
-			}
-			if data.DjName == "" || data.URL == "" {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:		fmt.Sprintf("url and dj name are required %v", err),
-				}, nil
-			}
-
-			result, err := set.CreateDjSet(ctx, data.URL, data.DjName)
-			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 500,
-					Body:		fmt.Sprintf("failed to create dj set %v", err),
-				}, nil
-			}
-
-			body, err := json.Marshal(result)
-			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 500,
-					Body:		fmt.Sprintf("failed to marshal response %v", err),
-				}, nil
-			}
-
-			return events.APIGatewayProxyResponse{
-				StatusCode: 201,
-				Body: 		string(body),
-				Headers: 	map[string]string{"Content-Type": "application/json"},
-			}, nil
+		data, err := extractDjAndUrl(request.Body)
+		if err != nil {
+			return respondError(400, "failed to extract url and djName ", err)
 		}
+		if data.DjName == "" || data.URL == "" {
+			return respond(400, "url and dj name are required"), nil
+		}
+
+		result, err := set.CreateDjSet(ctx, data.URL, data.DjName)
+		if err != nil {
+			return respondError(500, "failed to create dj set", err)
+		}
+
+		return respondJSON(200, result)
 	case "DELETE":
 		if !strings.HasPrefix(request.Path, "/sets") {
-			return events.APIGatewayProxyResponse{StatusCode: 404}, nil
+			return respond(404, "missing delete sets prefix"), nil
 		}
 		id := request.PathParameters["id"]
 		if id == "" {
@@ -121,32 +78,15 @@ func handleSets(ctx context.Context, request events.APIGatewayProxyRequest) (eve
 		}			
 		parsedID, err := uuid.Parse(id)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:		fmt.Sprintf("invalid set id %v", err),
-			}, nil 
+			return respondError(400,"invalid set id", err) 
 		}
 		result, err := set.DeleteDjSetById(ctx, parsedID)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:		fmt.Sprintf("unable to delete set by id %v", err),
-			}, nil
+			return respondError(400,"unable to delete set by id", err)
 		}
-		body, err := json.Marshal(result)
-		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:		fmt.Sprintf("failed to marshal response %v", err),
-			}, nil
-		}
-		return events.APIGatewayProxyResponse{
-			StatusCode: 200,
-			Body: 		string(body),
-			Headers: 	map[string]string{"Content-Type": "application/json"},
-		}, nil			
+
+		return respondJSON(200, result)			
 	default:
-		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
+		return respond(405, "default failed delete set operation message"), nil
 	}
-	return events.APIGatewayProxyResponse{StatusCode: 404}, nil
 }

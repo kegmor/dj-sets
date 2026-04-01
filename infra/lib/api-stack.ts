@@ -58,12 +58,17 @@ export class ApiStack extends Stack {
     }));
 
     const api = new LambdaRestApi(this, 'DjSetsApi', {
-        handler: apiFunction,
-        apiKeySourceType: ApiKeySourceType.HEADER,
-        defaultMethodOptions: {
-          apiKeyRequired: true,
-        },
-    });
+    handler: apiFunction,
+    apiKeySourceType: ApiKeySourceType.HEADER,
+    defaultCorsPreflightOptions: {
+        allowOrigins: ['*'],
+        allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'x-api-key'],
+    },
+    defaultMethodOptions: {
+        apiKeyRequired: true,
+    },
+});
 
     const apiKey = api.addApiKey('DjSetsApiKey');
     const plan = api.addUsagePlan('UsagePlan', {

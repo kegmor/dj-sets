@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	
 )
 
 type CreateCategoryRequest struct {
@@ -17,59 +15,25 @@ type CreateCategoryRequest struct {
 func handleCategories(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch request.HTTPMethod{
 	case "GET":		
-		data, err := category.GetAllMusicCategories(ctx)
+		result, err := category.GetAllMusicCategories(ctx)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:		fmt.Sprintf("failed to get categories %v", err),
-			}, nil
+			return respondError(400, "failed to get categories", err)
 		}
-		res, err := json.Marshal(data)
-		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:		fmt.Sprintf("failed to marshal response %v", err),
-			}, nil
-		}		
-		return events.APIGatewayProxyResponse{
-			StatusCode: 200,
-			Body: 		string(res),
-			Headers: 	map[string]string{"Content-Type": "application/json"},
-		}, nil						
+		return respondJSON(200, result)						
 	case "POST":		
 		var cat CreateCategoryRequest
 		err := json.Unmarshal([]byte(request.Body), &cat)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:       fmt.Sprintf("invalid request body %v", err),
-			}, nil
+			return respondError(400, "invalid request body", err)
 		}
 		if cat.Name == "" {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:       "category name is required",
-			}, nil
+			return respond(400, "category name is required"), nil
 		}
 		result, err := category.CreateCategory(ctx, cat.Name)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:		fmt.Sprintf("unable to create category %v", err),
-			}, nil
+			return respondError(400, "unable to create category", err)
 		}
-		body, err := json.Marshal(result)
-		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:		fmt.Sprintf("failed to marshal response %v", err),
-			}, nil
-		}
-		return events.APIGatewayProxyResponse{
-			StatusCode: 201,
-			Body: 		string(body),
-			Headers: 	map[string]string{"Content-Type": "application/json"},
-		}, nil
+		return respondJSON(200, result)
 	case "DELETE":
 		name := request.PathParameters["name"]
 		if name == "" {
@@ -78,24 +42,10 @@ func handleCategories(ctx context.Context, request events.APIGatewayProxyRequest
 		}			
 		result, err := category.DeleteCategory(ctx, name)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 400,
-				Body:		fmt.Sprintf("unable to delete category %v", err),
-			}, nil
+			return respondError(400, "unable to delete category", err)
 		}
-		body, err := json.Marshal(result)
-		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: 500,
-				Body:		fmt.Sprintf("failed to marshal response %v", err),
-			}, nil
-		}
-		return events.APIGatewayProxyResponse{
-			StatusCode: 200,
-			Body: 		string(body),
-			Headers: 	map[string]string{"Content-Type": "application/json"},
-		}, nil			
+		return respondJSON(200, result)			
 	default:
-		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
+		return respond(405, "default failed categories message"), nil
 	}
 }

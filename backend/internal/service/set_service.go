@@ -125,7 +125,7 @@ func (s *SetService) GetDjSetById(ctx context.Context, id uuid.UUID) ([]reposito
 	return []repository.Set{djSet}, nil
 }
 
-func (s *SetService) DeleteDjSetById (ctx context.Context ,id uuid.UUID) (*repository.Set, error) {
+func (s *SetService) DeleteDjSetById(ctx context.Context ,id uuid.UUID) (*repository.Set, error) {
 	djSet, err := s.db.DeleteSetById(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete dj set by id %w", err)

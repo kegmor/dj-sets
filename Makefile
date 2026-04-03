@@ -3,3 +3,5 @@ build:
 	cd backend && GOOS=linux GOARCH=amd64 go build -o cmd/youtube/bootstrap ./cmd/youtube/
 deploy: build
 	cd infra && cdk deploy --all
+build-migrate:
+	cd backend && GOOS=linux GOARCH=amd64 go build -o cmd/migrate/bootstrap cmd/migrate/main.go

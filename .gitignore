@@ -2,6 +2,7 @@
 backend/bin/
 backend/cmd/api/bootstrap
 backend/cmd/youtube/bootstrap
+backend/cmd/migrate/bootstrap
 
 # Frontend
 frontend/node_modules/
@@ -22,3 +23,4 @@ infra/cdk.context.json
 # Environment
 .env
 .env.local
+response.json

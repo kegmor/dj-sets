@@ -15,7 +15,6 @@ import (
 	"github.com/kegmor/dj-sets/backend/internal/database"
 	"github.com/kegmor/dj-sets/backend/internal/repository"
 	"github.com/kegmor/dj-sets/backend/internal/service"
-	_ "github.com/lib/pq"
 )
 
 

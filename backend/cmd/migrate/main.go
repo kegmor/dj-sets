@@ -1,21 +1,21 @@
-package migrate
+package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kegmor/dj-sets/backend/internal/database"
 )
 
-func handler(ctx context.Context, connStr string) error {
+func handler(ctx context.Context) error {
 	db, err := database.Connect()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 	
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v",err)
+		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	return database.RunMigrations(db);

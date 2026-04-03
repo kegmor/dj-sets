@@ -48,16 +48,17 @@ export class ApiStack extends Stack {
     });
 
     const migrateFunction = new Function(this, 'MigrateHandler', {
-    runtime: Runtime.PROVIDED_AL2023,
-    handler: 'bootstrap',
-    code: Code.fromAsset('../backend/cmd/migrate'),
-    vpc: props.vpc,
-    vpcSubnets: {
-        subnetType: SubnetType.PRIVATE_ISOLATED,
-    },
-    securityGroups: [props.dbSecurityGroup],
-    timeout: Duration.seconds(30),
-    });
+        functionName: 'dj-sets-migrate',
+        runtime: Runtime.PROVIDED_AL2023,
+        handler: 'bootstrap',
+        code: Code.fromAsset('../backend/cmd/migrate'),
+        vpc: props.vpc,
+        vpcSubnets: {
+            subnetType: SubnetType.PRIVATE_ISOLATED,
+        },
+        securityGroups: [props.dbSecurityGroup],
+        timeout: Duration.seconds(30),
+        });
 
     migrateFunction.addToRolePolicy(new PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],

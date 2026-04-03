@@ -10,18 +10,39 @@ function Library() {
         getSets().then(data => setDjSets(data));
     }, [])
 
+    const groupedSets = djSets.reduce((groups, set) => {
+        if (!groups[set.DjName]) {
+            groups[set.DjName] = [];
+        }
+        groups[set.DjName].push(set);
+        return groups;
+    }, {} as Record<string, DjSet[]>);
+
     return (
         <div className="Library">
             <Link to="/add">Add New Set</Link>
-            {djSets.map((set: DjSet) => (
-                <Link to={`sets/${set.ID}`} key={set.ID}>
-                    <h2>{set.DjName}</h2>
-                    <p>{set.Title}</p>
-                    <p>{set.ChannelName}</p>
-                </Link>
+            {Object.entries(groupedSets).map(([djName, sets]) => (
+                <div key={djName}>
+                    <h2>{djName}</h2>
+                    {sets.map((set: DjSet) => 
+                        <div key={set.ID}>
+                            <iframe
+                                width="560"
+                                height="315"
+                                src={`https://www.youtube.com/embed/${set.VideoID}`}
+                                title={set.Title}
+                                allowFullScreen
+                            />
+                            <Link to={`sets/${set.ID}`} key={set.ID}>
+                                <p>{set.Title}</p>
+                                <p>{set.ChannelName}</p>
+                            </Link>
+                        </div>
+                    )}
+                </div>
             ))}
         </div>
-    );
+    )
 }
 
 export default Library;

@@ -38,10 +38,11 @@ jobs:
         run: make build
 
       - name: Deploy
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
-        AWS_ENDPOINT_URL: ${{ secrets.AWS_URL }}
-        CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ID }}
-        CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        env: 
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
+          AWS_ENDPOINT_URL: ${{ secrets.AWS_URL }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ID }}
+          CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: cd infra && npm ci && npx cdk deploy --all --require-approval never --outputs-file /dev/null
       
       - name: Run migrations

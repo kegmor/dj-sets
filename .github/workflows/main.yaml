@@ -41,7 +41,7 @@ jobs:
       - name: Deploy
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
-        run: cd infra && npm ci && npx cdk deploy --all --require-approval never
+        run: cd infra && npm ci && npx cdk deploy --all --require-approval never --outputs-file /dev/null
       
       - name: Run migrations
         run: aws lambda invoke --function-name dj-sets-migrate --payload '{}' response.json && cat response.json      

@@ -12,9 +12,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true      
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
+      AWS_ENDPOINT_URL: ${{ secrets.AWS_URL }}
+      CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ID }}
+      CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -39,11 +42,6 @@ jobs:
         run: make build
 
       - name: Deploy
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
-          AWS_ENDPOINT_URL: ${{ secrets.AWS_URL }}
-          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ID }}
-          CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: cd infra && npm ci && npx cdk deploy --all --require-approval never --outputs-file /dev/null
       
       - name: Run migrations

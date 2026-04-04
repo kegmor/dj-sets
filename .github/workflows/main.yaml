@@ -43,6 +43,10 @@ jobs:
           echo "::add-mask::${{ secrets.AWS_URL }}"
           echo "::add-mask::${{ secrets.AWS_DB_URL }}"
           echo "::add-mask::${{ secrets.AWS_DB_PORT}}"
+          echo "::add-mask::${{ secrets.AWS_RDS_SECRET_NAME}"          
+          echo "::add-mask::${{ secrets.AWS_SECGROUP_ID}}"
+          echo "::add-mask::${{ secrets.AWS_SUBNET_1}}"
+          echo "::add-mask::${{ secrets.AWS_SUBNET_2}}"
 
       - name: Deploy
         run: |

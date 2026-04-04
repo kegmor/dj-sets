@@ -89,7 +89,6 @@ export class ApiStack extends Stack {
         apiKeyRequired: true,
     },
 });
-    api.node.tryRemoveChild('Endpoint');
 
     const apiKey = api.addApiKey('DjSetsApiKey');
     const plan = api.addUsagePlan('UsagePlan', {

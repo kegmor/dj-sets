@@ -41,6 +41,8 @@ jobs:
         run: |
           echo "::add-mask::${{ secrets.AWS_ID }}"
           echo "::add-mask::${{ secrets.AWS_URL }}"
+          echo "::add-mask::${{ secrets.AWS_DB_URL }}"
+          echo "::add-mask::${{ secrets.AWS_DB_PORT}}"
 
       - name: Deploy
         run: |

@@ -37,13 +37,16 @@ jobs:
       - name: Build
         run: make build
 
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::${{ secrets.AWS_ID }}"
+          echo "::add-mask::${{ secrets.AWS_URL }}"
+
       - name: Deploy
-        env: 
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ID }}
-          AWS_ENDPOINT_URL: ${{ secrets.AWS_URL }}
-          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ID }}
-          CDK_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
-        run: cd infra && npm ci && npx cdk deploy --all --require-approval never --outputs-file /dev/null
+        run: |
+          export CDK_DEFAULT_ACCOUNT=${{ secrets.AWS_ID }}
+          export CDK_DEFAULT_REGION=${{ secrets.AWS_REGION }}
+          cd infra && npm ci && npx cdk deploy --all --require-approval never
       
       - name: Run migrations
         run: aws lambda invoke --function-name dj-sets-migrate --payload '{}' response.json && cat response.json      

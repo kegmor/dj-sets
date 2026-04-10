@@ -98,6 +98,7 @@ export class ApiStack extends Stack {
         },
     });
     
+    api.node.tryRemoveChild('Endpoint');
     plan.addApiKey(apiKey);
     plan.addApiStage({ stage: api.deploymentStage });
   }

@@ -8,3 +8,8 @@ export interface DjSet {
     CreatedAt: string;
     UpdatedAt: string;
 }
+
+export interface Category {
+    ID: string;
+    Name: string;
+}

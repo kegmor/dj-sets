@@ -18,6 +18,12 @@ export async function getSetsById(id: string) {
     return response.json();
 }
 
+export async function getCategoriesForSet(setId: string) {
+    const response = await fetch(`${API_URL}/sets/${setId}/categories`, { headers });
+    if(!response.ok) throw new Error('Failed to fetch categories for set');
+    return response.json();
+}
+
 export async function createSet(url: string, djName: string) {
     const data = {
         'url': url,
@@ -58,4 +64,17 @@ export async function createCategory(name: string) {
     });
     if(!response.ok) throw new Error('Failed to create category');
     return response.json();
+}
+
+export async function addCategoryToSet(setId: string, category: string) {
+    const data = {
+        'category': category
+    }
+    const response = await fetch(`${API_URL}/sets/${setId}/categories`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data)
+    });
+    if(!response.ok) throw new Error('Failed to add category');
+    return response.text();
 }

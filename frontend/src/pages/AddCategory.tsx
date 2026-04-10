@@ -10,10 +10,12 @@ function AddCategory() {
     })
     
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({...formData, [e.target.name]: e.target.value});
-    }
+    console.log("input:", e.target.name, e.target.value);
+    setFormData({...formData, [e.target.name]: e.target.value});
+}
 
     const handleSubmit = async () => {
+        console.log("sending:", formData.category);
         await createCategory(formData.category);
         navigate('/');
     }

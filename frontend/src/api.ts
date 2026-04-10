@@ -59,3 +59,16 @@ export async function createCategory(name: string) {
     if(!response.ok) throw new Error('Failed to create category');
     return response.json();
 }
+
+export async function addCategory(setId: string, category: string) {
+    const data = {
+        'category': category
+    }
+    const response = await fetch(`${API_URL}/sets/${setId}/categories`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data)
+    });
+    if(!response.ok) throw new Error('Failed to add category');
+    return response.json();
+}

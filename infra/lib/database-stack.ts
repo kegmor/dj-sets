@@ -118,22 +118,6 @@ export class DatabaseStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    // Output connection information
-    new CfnOutput(this, 'DbEndpoint', {
-      value: database.instanceEndpoint.hostname,
-      description: 'Database endpoint hostname',
-    });
-
-    new CfnOutput(this, 'DbPort', {
-      value: database.instanceEndpoint.port.toString(),
-      description: 'Database port',
-    });
-
-    new CfnOutput(this, 'SecretArn', {
-      value: database.secret?.secretArn || 'N/A',
-      description: 'ARN of the secret containing database credentials',
-    });
-
     this.vpc = vpc;
     this.dbSecurityGroup = dbSecurityGroup;
     this.dbSecret = database.secret!;

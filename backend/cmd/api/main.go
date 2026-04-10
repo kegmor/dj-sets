@@ -27,6 +27,7 @@ var corsHeaders = map[string]string{
 
 var set *service.SetService
 var category *service.CatService
+var set_categories *service.SetCategoryService
 
 func init() {
 	db, err := database.Connect()
@@ -44,6 +45,7 @@ func init() {
 	lambdaClient := lambdaService.NewFromConfig(cfg)
 	set = service.NewSetService(repository.New(db), lambdaClient, ytLambda)
 	category = service.NewCatService(repository.New(db))
+	set_categories = service.NewSetCategoryService(repository.New(db))
 }
 
 func respond(statusCode int, body string) events.APIGatewayProxyResponse {
@@ -71,7 +73,9 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		return respond(200, ""), nil
 	}
 	
-	if strings.HasPrefix(request.Path, "/sets") {
+	if strings.HasPrefix(request.Path, "/sets") && strings.Contains(request.Path, "/categories") {
+    	return handleSetCategories(ctx, request)
+	} else if strings.HasPrefix(request.Path, "/sets") {
         return handleSets(ctx, request)
     } else if strings.HasPrefix(request.Path, "/categories") {
         return handleCategories(ctx, request)

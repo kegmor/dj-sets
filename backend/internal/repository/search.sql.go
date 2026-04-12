@@ -7,17 +7,16 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 )
 
 const getSetsByCategory = `-- name: GetSetsByCategory :many
 SELECT sets.id, sets.video_id, sets.title, sets.dj_name, sets.channel_name, sets.url, sets.created_at, sets.updated_at FROM sets
 JOIN set_categories ON sets.id = set_categories.set_id
 JOIN categories ON set_categories.category_id = categories.id 
-WHERE categories.name ILIKE '%' || $1 || '%'
+WHERE categories.name ILIKE '%' || $1::text || '%'
 `
 
-func (q *Queries) GetSetsByCategory(ctx context.Context, dollar_1 sql.NullString) ([]Set, error) {
+func (q *Queries) GetSetsByCategory(ctx context.Context, dollar_1 string) ([]Set, error) {
 	rows, err := q.db.QueryContext(ctx, getSetsByCategory, dollar_1)
 	if err != nil {
 		return nil, err
@@ -50,10 +49,10 @@ func (q *Queries) GetSetsByCategory(ctx context.Context, dollar_1 sql.NullString
 }
 
 const getSetsByChannelName = `-- name: GetSetsByChannelName :many
-SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE channel_name ILIKE '%' || $1 || '%'
+SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE channel_name ILIKE '%' || $1::text || '%'
 `
 
-func (q *Queries) GetSetsByChannelName(ctx context.Context, dollar_1 sql.NullString) ([]Set, error) {
+func (q *Queries) GetSetsByChannelName(ctx context.Context, dollar_1 string) ([]Set, error) {
 	rows, err := q.db.QueryContext(ctx, getSetsByChannelName, dollar_1)
 	if err != nil {
 		return nil, err
@@ -86,10 +85,10 @@ func (q *Queries) GetSetsByChannelName(ctx context.Context, dollar_1 sql.NullStr
 }
 
 const getSetsByDjName = `-- name: GetSetsByDjName :many
-SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE dj_name ILIKE '%' || $1 || '%'
+SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE dj_name ILIKE '%' || $1::text || '%'
 `
 
-func (q *Queries) GetSetsByDjName(ctx context.Context, dollar_1 sql.NullString) ([]Set, error) {
+func (q *Queries) GetSetsByDjName(ctx context.Context, dollar_1 string) ([]Set, error) {
 	rows, err := q.db.QueryContext(ctx, getSetsByDjName, dollar_1)
 	if err != nil {
 		return nil, err
@@ -122,10 +121,10 @@ func (q *Queries) GetSetsByDjName(ctx context.Context, dollar_1 sql.NullString) 
 }
 
 const getSetsByTitle = `-- name: GetSetsByTitle :many
-SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE title ILIKE '%' || $1 || '%'
+SELECT id, video_id, title, dj_name, channel_name, url, created_at, updated_at FROM sets WHERE title ILIKE '%' || $1::text || '%'
 `
 
-func (q *Queries) GetSetsByTitle(ctx context.Context, dollar_1 sql.NullString) ([]Set, error) {
+func (q *Queries) GetSetsByTitle(ctx context.Context, dollar_1 string) ([]Set, error) {
 	rows, err := q.db.QueryContext(ctx, getSetsByTitle, dollar_1)
 	if err != nil {
 		return nil, err

@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
-import { getCategoriesForSet, getSets } from "../api";
+import { getCategoriesForSet, getSets, searchSets } from "../api";
 import { type DjSet, type Category } from "../types"
 
 function Library() {
     const [djSets, setDjSets] = useState<DjSet[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        getSets().then(data => setDjSets(data));
-    }, [])
+        if (searchQuery === "") {
+            getSets().then(data => setDjSets(data));
+        } else {
+            searchSets(searchQuery).then(data => setDjSets(data))
+        }
+    }, [searchQuery]);
 
     const [setCategories, setSetCategories] = useState<Record<string, Category[]>>({});
 
@@ -31,7 +36,11 @@ function Library() {
 
     return (
         <div className="Library">
-            <Link to="/add">Add New Set</Link>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "20px"}}>
+                <Link to="/add">Add New Set</Link>
+                <Link to="/categories">Add New Category</Link>
+                <input type="text" placeholder="Search Sets" onChange={(e) => setSearchQuery(e.target.value)}/>
+            </div>            
             {Object.entries(groupedSets).map(([djName, sets]) => (
                 <div key={djName}>
                     <h2>{djName}</h2>

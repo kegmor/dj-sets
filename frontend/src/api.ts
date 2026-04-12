@@ -78,3 +78,10 @@ export async function addCategoryToSet(setId: string, category: string) {
     if(!response.ok) throw new Error('Failed to add category');
     return response.text();
 }
+
+export async function searchSets(query: string) {
+    const response = await
+    fetch(`${API_URL}/sets/search?q=${query}`, { headers });
+    if(!response.ok) throw new Error('Failed to search sets');
+    return response.json();
+}
